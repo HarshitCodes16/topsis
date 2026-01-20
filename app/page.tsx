@@ -351,7 +351,7 @@ export default function App() {
 
       <footer className="max-w-6xl mx-auto px-6 py-12 border-t border-slate-100 text-center">
         <p className="text-xs text-slate-400 font-medium tracking-wide">
-          © 2024 TOPSISCORE DECISION ENGINE • PRIVACY • SECURITY • TERMS
+          © 2026 TOPSISCORE DECISION ENGINE • PRIVACY • SECURITY • TERMS
         </p>
       </footer>
     </div>
