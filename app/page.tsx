@@ -126,6 +126,17 @@ export default function App() {
       
       const data = await parseFile(file);
       const output = calculateTopsis(data, weights, impacts);
+      console.log(output)
+
+      // send email
+      const response = await fetch('/api/send-email', {
+        method: 'POST',
+        body: JSON.stringify({ email, output }),
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      const res = await response.json();
+      console.log('Email API Response:', res);
       setResults(output);
     } catch (err) {
       setError(err.message);
