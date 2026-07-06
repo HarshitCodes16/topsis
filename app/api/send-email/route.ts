@@ -10,17 +10,17 @@ export async function POST(request: Request) {
     const columnNames = Object.keys(output[0]);
     // console.log(columnNames)
   
-    const rows = output.slice(1);
+    const rows = output;
     console.log("Rows:", rows)
 
 
     for(let row = 0; row < rows.length; row++) {
         console.log("Row ", row, ": ", rows[row]);
     }
-  resend.emails.send({
+  await resend.emails.send({
   from: 'onboarding@resend.dev',
   to: 'hkatyal_be23@thapar.edu',
-//   to: email,
+  //to: email,
   subject: 'Topsis Analysis Result',
   html: `
     <h1>Your Topsis Analysis is Complete</h1>
