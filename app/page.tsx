@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Upload, Mail, BarChart3, Info, AlertCircle, CheckCircle2, FileText, ChevronRight } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 export default function App() {
   const [file, setFile] = useState(null);
@@ -13,7 +14,6 @@ export default function App() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [fileName, setFileName] = useState('');
 
-  // Load XLSX library via CDN for environment compatibility
   useEffect(() => {
     if (!window.XLSX) {
       const script = document.createElement('script');
@@ -23,7 +23,6 @@ export default function App() {
     }
   }, []);
 
-  // --- TOPSIS Logic ---
   const parseFile = (file) => {
     return new Promise((resolve, reject) => {
       if (!window.XLSX) {
@@ -50,9 +49,9 @@ export default function App() {
   const calculateTopsis = (data, wStr, iStr) => {
     const weightsArr = wStr.split(',').map(w => parseFloat(w.trim()));
     const impactsArr = iStr.split(',').map(i => i.trim());
-    
+
     if (data.length === 0) throw new Error("The uploaded file is empty.");
-    
+
     const headers = Object.keys(data[0]);
     const criteriaKeys = headers.slice(1);
 
@@ -68,19 +67,17 @@ export default function App() {
       return val;
     }));
 
-    // 1. Normalize
     const rss = Array(m).fill(0);
     for (let j = 0; j < m; j++) {
       for (let i = 0; i < n; i++) rss[j] += Math.pow(matrix[i][j], 2);
       rss[j] = Math.sqrt(rss[j]);
-      if (rss[j] === 0) rss[j] = 1; // Prevent division by zero
+      if (rss[j] === 0) rss[j] = 1;
     }
 
-    const weighted = matrix.map(row => 
+    const weighted = matrix.map(row =>
       row.map((val, j) => (val / rss[j]) * weightsArr[j])
     );
 
-    // 2. Ideals
     const best = [];
     const worst = [];
     for (let j = 0; j < m; j++) {
@@ -94,7 +91,6 @@ export default function App() {
       }
     }
 
-    // 3. Distances & Scores
     const scores = data.map((row, i) => {
       let dPlus = 0;
       let dMinus = 0;
@@ -108,7 +104,6 @@ export default function App() {
       return { ...row, score: score.toFixed(4) };
     });
 
-    // 4. Rank
     return scores
       .sort((a, b) => b.score - a.score)
       .map((item, idx) => ({ ...item, rank: idx + 1 }));
@@ -118,17 +113,16 @@ export default function App() {
     e.preventDefault();
     setError(null);
     setIsProcessing(true);
-    
+
     try {
       if (!file) throw new Error("Please upload a file first.");
       if (!weights) throw new Error("Please provide weights.");
       if (!impacts) throw new Error("Please provide impacts (+/-).");
-      
+
       const data = await parseFile(file);
       const output = calculateTopsis(data, weights, impacts);
-      console.log(output)
+      console.log(output);
 
-      // send email
       const response = await fetch('/api/send-email', {
         method: 'POST',
         body: JSON.stringify({ email, output }),
@@ -147,7 +141,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#FBFBFD] text-slate-900 font-sans antialiased selection:bg-blue-100 selection:text-blue-900">
-      {/* Navigation / Header */}
+      {/* Navigation */}
       <nav className="max-w-6xl mx-auto px-6 py-8 flex justify-between items-center">
         <div className="flex items-center gap-2 group cursor-default">
           <div className="w-10 h-10 bg-black rounded-xl flex items-center justify-center text-white transition-transform group-hover:rotate-12">
@@ -155,7 +149,6 @@ export default function App() {
           </div>
           <span className="font-bold text-xl tracking-tight">Topsis<span className="text-blue-600">Core</span></span>
         </div>
-        
       </nav>
 
       <main className="max-w-6xl mx-auto px-6 pb-24 grid lg:grid-cols-5 gap-12 items-start">
@@ -169,10 +162,10 @@ export default function App() {
           </div>
 
           <form onSubmit={handleProcess} className="space-y-6">
-            {/* File Upload Area */}
+            {/* File Upload */}
             <div className="group relative">
               <label className={`
-                flex flex-col items-center justify-center w-full h-44 
+                flex flex-col items-center justify-center w-full h-44
                 border-2 border-dashed rounded-3xl cursor-pointer
                 transition-all duration-300
                 ${file ? 'border-blue-200 bg-blue-50/30' : 'border-slate-200 bg-white hover:border-blue-400 hover:bg-slate-50'}
@@ -207,7 +200,7 @@ export default function App() {
               </label>
             </div>
 
-            {/* Inputs Container */}
+            {/* Inputs */}
             <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-5">
               <div className="space-y-4">
                 <div className="relative">
@@ -278,7 +271,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* Right Side: Results Display */}
+        {/* Right Side: Results */}
         <div className="lg:col-span-3 min-h-[500px]">
           {!results ? (
             <div className="h-full w-full border border-slate-100 rounded-[2rem] bg-white flex flex-col items-center justify-center text-center p-12 space-y-4">
@@ -297,7 +290,7 @@ export default function App() {
                   <h2 className="text-2xl font-bold text-slate-900">Ranking Output</h2>
                   <p className="text-sm text-slate-500">Based on {results.length} alternatives</p>
                 </div>
-                <button 
+                <button
                   onClick={() => window.print()}
                   className="text-xs font-bold uppercase tracking-wider text-blue-600 hover:text-blue-700 bg-blue-50 px-4 py-2 rounded-lg"
                 >
@@ -305,6 +298,7 @@ export default function App() {
                 </button>
               </div>
 
+              {/* Rankings Table */}
               <div className="bg-white rounded-[2rem] border border-slate-100 shadow-xl shadow-slate-200/50 overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse">
@@ -334,8 +328,8 @@ export default function App() {
                             <div className="flex items-center gap-3">
                               <span className="text-sm font-mono font-medium text-slate-500">{item.score}</span>
                               <div className="w-24 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                <div 
-                                  className="h-full bg-blue-500 rounded-full transition-all duration-1000" 
+                                <div
+                                  className="h-full bg-blue-500 rounded-full transition-all duration-1000"
                                   style={{ width: `${item.score * 100}%` }}
                                 />
                               </div>
@@ -355,6 +349,30 @@ export default function App() {
                   </table>
                 </div>
               </div>
+
+              {/* Chart Section */}
+              <div className="bg-white rounded-[2rem] border border-slate-100 shadow-xl shadow-slate-200/50 p-6">
+                <h3 className="text-lg font-bold text-slate-900 mb-4">Score Distribution</h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={results} margin={{ top: 10, right: 20, left: 0, bottom: 5 }}>
+                    <XAxis dataKey={Object.keys(results[0])[0]} tick={{ fontSize: 12 }} />
+                    <YAxis domain={[0, 1]} tick={{ fontSize: 12 }} />
+                    <Tooltip
+                      formatter={(value) => [value, 'Score']}
+                      contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0' }}
+                    />
+                    <Bar dataKey="score" radius={[8, 8, 0, 0]}>
+                      {results.map((_, index) => (
+                        <Cell
+                          key={index}
+                          fill={index === 0 ? '#3b82f6' : '#e2e8f0'}
+                        />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+
             </div>
           )}
         </div>
